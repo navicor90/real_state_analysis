@@ -20,6 +20,7 @@ def fix_clean_total_area(df_original):
     df.totalArea_fixed = pd.to_numeric(df.totalArea_fixed, errors='coerce')
     return df
 
+
 def fix_clean_floor_area(df_original):
     df = df_original.copy()
     df = df[df['floorArea']!='disable']
@@ -37,6 +38,24 @@ def fix_clean_floor_area(df_original):
     return df
 
 
+def bucketizer(df, bucket_limits, field, new_field):
+    prev_limit = None
+    ranges = []
+    for i,limit in enumerate(bucket_limits):
+        if i==0:
+            df.loc[df[field] <= limit, new_field] = 0
+            ranges = ["0.."+str(limit)]
+        elif i==len(bucket_limits)-1:
+            df.loc[np.logical_and(df[field] > prev_limit,df[field] <= limit), new_field] = prev_limit
+            ranges.append(str(prev_limit)+".."+str(limit))
+            
+            df.loc[df[field] > limit, new_field] = limit
+            ranges.append(str(limit)+"..")
+        else:
+            df.loc[np.logical_and(df[field] > prev_limit,df[field] <= limit), new_field] = prev_limit
+            ranges.append(str(prev_limit)+".."+str(limit))
+        prev_limit = limit
+    return ranges
 
 
 def str_serie_to_vector(pd_serie, stop_words=[]):
